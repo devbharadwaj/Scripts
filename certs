@@ -1,0 +1,66 @@
+mkdir keys
+
+touch keys/ca.ext
+
+
+
+# Generate root rsa
+openssl genrsa -aes256 -passout pass:changeit -out keys/ca-key.pem 2048
+
+
+# Generate root csr
+openssl req -new -key keys/ca-key.pem -passin pass:changeit -subj "/CN=Your Root Certificate Authority/OU=Team/O=Test Company Group/ST=New York/C=US" -out keys/ca-req.pem
+
+
+# Generate root cer
+openssl x509 -req -sha256 -days 3650 -in keys/ca-req.pem -signkey keys/ca-key.pem -passin pass:changeit -out ca-cert.cer -CAcreateserial -CAserial keys/serialnumber.seq -extfile keys/ca.ext
+
+
+# View cer
+openssl x509 -in ca-cert.cer -text
+
+
+
+
+# Generate inter rsa
+openssl genrsa -aes256 -passout pass:changeit -out keys/int-key.pem 2048
+
+
+# Generate inter csr
+openssl req -new -key keys/int-key.pem -passin pass:changeit -subj "/CN=Your Intermediate Certificate Authority/OU=Team/O=Test Company Group/ST=New York/C=US" -out keys/int-req.pem
+
+
+# Generate inter cer
+openssl x509 -req -sha256 -days 3650 -in keys/int-req.pem -CA ca-cert.cer -CAkey keys/ca-key.pem -passin pass:changeit -out int-cert.cer -CAcreateserial -CAserial keys/serialnumber.seq -extfile keys/ca.ext
+
+
+# Create certificate chain
+cat ca-cert.cer int-cert.cer > ca-cert-chain.cer
+
+
+
+
+
+# Generate user rsa
+openssl genrsa -aes256 -passout pass:changeit -out keys/janedoe-key.pem 2048
+
+# Generate user csr
+openssl req -new -key keys/janedoe-key.pem -passin pass:changeit -subj "/CN=janedoe/OU=Team/O=Test Company Group/ST=New York/C=US" -out keys/janedoe-req.pem
+
+
+# Generate user cer
+openssl x509 -req -sha256 -days 3650 -in keys/janedoe-req.pem -CA ca-cert.cer -CAkey keys/ca-key.pem -passin pass:changeit -out janedoe-cert.cer -CAcreateserial -CAserial keys/serialnumber.seq -extfile 
+
+keys/ca.ext
+
+
+# Generate user PKCS12
+openssl pkcs12 -export -out janedoe.p12 -aes256 -in janedoe-cert.cer -inkey keys/janedoe-key.pem -passin pass:changeit -certfile ca-cert-chain.cer -passout pass:changeit
+
+
+
+
+
+
+
+
